@@ -48,6 +48,7 @@ int xComida;
 int yComida;
 
 void validaBotaoColisao(int oldDirecao) {
+    //Valida se a tecla pressionada vai bater no corpo
     switch (direcao) {
         case 1:
             if (corpo[0].x + 1 == corpo[1].x) {
@@ -73,7 +74,8 @@ void validaBotaoColisao(int oldDirecao) {
 }
 
 void thread_pegarDirecao() {
-    while (!ganhou && !perdeu) {  // Loop principal do jogo
+    // Pegar e validar teclas
+    while (!ganhou && !perdeu) {
         if (_kbhit()) {
             char tecla = _getch();
             int old = direcao;
@@ -93,7 +95,6 @@ void thread_pegarDirecao() {
             }
             validaBotaoColisao(old);
         }
-        // printf("Minha thread");
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
@@ -109,11 +110,9 @@ void verificaColisoes() {
         return;
     }
 
+    // Colisão com o corpo
     for (int i = 1; i < sizeCobra; i++) {
         if (corpo[0].x == corpo[i].x && corpo[0].y == corpo[i].y) {
-            // printf("corpo[%d].x:%d\tcorpo[%d].y:%d\n", i, corpo[i].x, i, corpo[i].y);
-            // i=0;
-            // printf("corpo[%d].x:%d\tcorpo[%d].y:%d\n", i, corpo[i].x, i, corpo[i].y);
             perdeu = true;
             return;
         }
@@ -121,8 +120,10 @@ void verificaColisoes() {
 }
 
 void atualizarCobra() {
+    // Tirar o ultimo caractere do rabo
     gotoxy(corpo[sizeCobra - 1].x, corpo[sizeCobra - 1].y);
     printf(" ");
+
     // Movimentação da cobra
     for (int i = sizeCobra - 1; i > 0; i--) {
         corpo[i] = corpo[i - 1];
@@ -150,8 +151,11 @@ void atualizarCobra() {
 }
 
 void desenharCobra() {
+    //Desenha a cabeça
     gotoxy(corpo[0].x, corpo[0].y);
     std::cout << cabecaCobra;
+
+    //Desenha o corpo da cobra
     for (int i = 1; i < sizeCobra; i++) {
         gotoxy(corpo[i].x, corpo[i].y);
         printf("o");
@@ -182,42 +186,55 @@ void desenharParedes() {
 }
 
 void esconderCursor() {
+    //Esconder o cursor pra não atrapalhar
     CONSOLE_CURSOR_INFO cursorInfo;
-    cursorInfo.dwSize = 1;  // Tamanho do cursor definido como 1 (mínimo)
+    cursorInfo.dwSize = 1;
     cursorInfo.bVisible = FALSE;
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 }
 
 void verificarComeuComida() {
+    //verifica se comeu a comidinha
     if (corpo[0].x == xComida && corpo[0].y == yComida) {
+        //Se o tamanho da cobra já está no limite pra ganhar
         if (sizeCobra + 1 >= LIMITE_TAMANHO_COBRA) {
             ganhou = true;
             return;
         }
+        //Seta para realizar o spawn de outra comida
         comidaSpawnada = false;
+
+        //Aumenta o tamanho da cobra
         sizeCobra++;
+
+        //O pedaço adicionado vai estar no mesmo espaço do ultimo
         corpo[sizeCobra - 1] = corpo[sizeCobra - 2];
     }
 }
 
 void spawnComida() {
+    //Spawna a comida se n tiver
     if (comidaSpawnada) return;
 
+    //Coord aleatorias limitadas para o spawn
     xComida = xAleatorio(rng);
     yComida = yAleatorio(rng);
 
+    //Spawna a comida com cor diferente
+    char comida = 'o';
     gotoxy(xComida, yComida);
-    printf("\033[31mo");
+    printf("\033[31m%c", comida);
     printf("\033[0m");
     comidaSpawnada = true;
 }
 
 int main() {
+    //Seta spawn inicial da cobra
     for (int i = 0; i < sizeCobra; i++) {
         corpo[i].x = LIMITE_X_MIN + 1 + sizeCobra - i;
         corpo[i].y = LIMITE_Y_MIN + 1;
     }
-
+    
     esconderCursor();
     std::thread thread_direcao(thread_pegarDirecao);
     system("cls");
