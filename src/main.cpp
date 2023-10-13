@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <random>
+#include <skins.hpp>
 #include <thread>
 
 #define LIMITE_X_MIN 2
@@ -14,8 +15,6 @@
 #define LIMITE_Y_MAX 31
 
 #define LIMITE_TAMANHO_COBRA 30
-
-#define SKIN_PAREDE 176
 
 void gotoxy(int x, int y) {
     COORD pos;
@@ -31,7 +30,7 @@ typedef struct {
 
 int sizeCobra = 3;
 pedaco corpo[20];
-char cabecaCobra = '>';
+char cabecaCobra = SKIN_CABECA_DIREITA;
 
 bool ganhou = false;
 bool perdeu = false;
@@ -48,7 +47,7 @@ int xComida;
 int yComida;
 
 void validaBotaoColisao(int oldDirecao) {
-    //Valida se a tecla pressionada vai bater no corpo
+    // Valida se a tecla pressionada vai bater no corpo
     switch (direcao) {
         case 1:
             if (corpo[0].x + 1 == corpo[1].x) {
@@ -122,7 +121,7 @@ void verificaColisoes() {
 void atualizarCobra() {
     // Tirar o ultimo caractere do rabo
     gotoxy(corpo[sizeCobra - 1].x, corpo[sizeCobra - 1].y);
-    printf(" ");
+    printf("%c", SKIN_VAZIO);
 
     // Movimentação da cobra
     for (int i = sizeCobra - 1; i > 0; i--) {
@@ -133,32 +132,32 @@ void atualizarCobra() {
     switch (direcao) {
         case 1:
             corpo[0].x++;
-            cabecaCobra = '>';
+            cabecaCobra = SKIN_CABECA_DIREITA;
             break;
         case 2:
             corpo[0].x--;
-            cabecaCobra = '<';
+            cabecaCobra = SKIN_CABECA_ESQUERDA;
             break;
         case 3:
             corpo[0].y--;
-            cabecaCobra = 'A';
+            cabecaCobra = SKIN_CABECA_CIMA;
             break;
         case 4:
             corpo[0].y++;
-            cabecaCobra = 'v';
+            cabecaCobra = SKIN_CABECA_BAIXO;
             break;
     }
 }
 
 void desenharCobra() {
-    //Desenha a cabeça
+    // Desenha a cabeça
     gotoxy(corpo[0].x, corpo[0].y);
     std::cout << cabecaCobra;
 
-    //Desenha o corpo da cobra
+    // Desenha o corpo da cobra
     for (int i = 1; i < sizeCobra; i++) {
         gotoxy(corpo[i].x, corpo[i].y);
-        printf("o");
+        printf("%c", SKIN_CORPO);
     }
 }
 
@@ -186,7 +185,7 @@ void desenharParedes() {
 }
 
 void esconderCursor() {
-    //Esconder o cursor pra não atrapalhar
+    // Esconder o cursor pra não atrapalhar
     CONSOLE_CURSOR_INFO cursorInfo;
     cursorInfo.dwSize = 1;
     cursorInfo.bVisible = FALSE;
@@ -194,50 +193,53 @@ void esconderCursor() {
 }
 
 void verificarComeuComida() {
-    //verifica se comeu a comidinha
+    // verifica se comeu a comidinha
     if (corpo[0].x == xComida && corpo[0].y == yComida) {
-        //Se o tamanho da cobra já está no limite pra ganhar
+        // Se o tamanho da cobra já está no limite pra ganhar
         if (sizeCobra + 1 >= LIMITE_TAMANHO_COBRA) {
             ganhou = true;
             return;
         }
-        //Seta para realizar o spawn de outra comida
+        // Seta para realizar o spawn de outra comida
         comidaSpawnada = false;
 
-        //Aumenta o tamanho da cobra
+        // Aumenta o tamanho da cobra
         sizeCobra++;
 
-        //O pedaço adicionado vai estar no mesmo espaço do ultimo
+        // O pedaço adicionado vai estar no mesmo espaço do ultimo
         corpo[sizeCobra - 1] = corpo[sizeCobra - 2];
     }
 }
 
 void spawnComida() {
-    //Spawna a comida se n tiver
+    // Spawna a comida se n tiver
     if (comidaSpawnada) return;
 
-    //Coord aleatorias limitadas para o spawn
+    // Coord aleatorias limitadas para o spawn
     xComida = xAleatorio(rng);
     yComida = yAleatorio(rng);
 
-    //Spawna a comida com cor diferente
-    char comida = 'o';
+    // Spawna a comida com cor diferente
     gotoxy(xComida, yComida);
-    printf("\033[31m%c", comida);
-    printf("\033[0m");
+    printf("%s%c", SKIN_COR_VERMELHO, SKIN_COMIDA);
+    printf("%s", SKIN_COR_BRANCO);
     comidaSpawnada = true;
 }
 
+void apagarTela() {
+    system("cls");
+}
+
 int main() {
-    //Seta spawn inicial da cobra
+    // Seta spawn inicial da cobra
     for (int i = 0; i < sizeCobra; i++) {
         corpo[i].x = LIMITE_X_MIN + 1 + sizeCobra - i;
         corpo[i].y = LIMITE_Y_MIN + 1;
     }
-    
+
     esconderCursor();
     std::thread thread_direcao(thread_pegarDirecao);
-    system("cls");
+    apagarTela();
     desenharParedes();
 
     while (1) {
@@ -251,7 +253,7 @@ int main() {
     }
     thread_direcao.join();
 
-    system("cls");
+    apagarTela();
     if (perdeu) {
         printf("Ruimzao");
     } else if (ganhou) {
